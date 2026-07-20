@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Черновик — блог-платформа</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12151c;
+    --bg-soft: #1a1f29;
+    --desk-line: #262c38;
+    --paper: #f4f0e6;
+    --paper-shade: #e8e2d2;
+    --ink: #262019;
+    --ink-soft: #6b6355;
+    --gold: #d4a73c;
+    --gold-deep: #a9812a;
+    --teal: #4fa89e;
+    --burgundy: #93433f;
+    --paper-line: #d8d0bb;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, #1c2230 0%, transparent 45%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--paper);
+    font-family: 'Source Sans 3', sans-serif;
+    min-height:100vh;
+  }
+  ::selection{ background: var(--gold); color:#1a1a1a; }
+ 
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+ 
+  a{color:var(--teal);}
+ 
+  /* ---------- layout shell ---------- */
+  #app{ max-width: 980px; margin: 0 auto; padding: 28px 20px 80px; }
+ 
+  header.topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:22px; margin-bottom: 26px;
+    border-bottom: 1px solid var(--desk-line);
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand .mark{
+    font-family:'Fraunces', serif; font-weight:700; font-size:26px; font-style:italic;
+    color: var(--gold);
+  }
+  .brand .tag{ font-family:'IBM Plex Mono'; font-size:11px; letter-spacing:.14em; color:#8891a3; text-transform:uppercase;}
+  .who{ display:flex; align-items:center; gap:12px; font-size:14px; color:#b7bfcf;}
+  .who .name{ color:var(--paper); font-weight:600;}
+  button, .btn{
+    font-family:'Source Sans 3', sans-serif; font-weight:600; font-size:14px;
+    border-radius: 3px; border: 1px solid transparent; cursor:pointer;
+    padding: 9px 16px; transition: transform .08s ease, filter .12s ease;
+  }
+  button:active{ transform: translateY(1px); }
+  .btn-primary{ background: var(--gold); color:#241d0d; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{ background:transparent; color: var(--paper); border:1px solid #3a4152; }
+  .btn-ghost:hover{ border-color:#5a6479; }
+  .btn-danger{ background:transparent; color:#e3a19c; border:1px solid #6b3733;}
+  .btn-danger:hover{ background:#3a1f1d; }
+  .btn-small{ padding:5px 10px; font-size:12px; }
+  input, textarea, select{
+    font-family:'Source Sans 3', sans-serif; font-size:14px;
+    background: #0f1319; color: var(--paper);
+    border:1px solid #333c4c; border-radius:3px; padding:10px 12px;
+    width:100%;
+  }
+  input:focus, textarea:focus, select:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  label{ font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#8891a3; font-family:'IBM Plex Mono'; display:block; margin-bottom:6px;}
+  .field{ margin-bottom:16px; }
+ 
+  nav.tabs{ display:flex; gap:4px; margin-bottom:24px; flex-wrap:wrap; }
+  nav.tabs button{
+    background:transparent; border:1px solid var(--desk-line); color:#9aa3b5;
+    font-size:13px; padding:8px 14px;
+  }
+  nav.tabs button.active{ background: var(--bg-soft); color: var(--gold); border-color:var(--gold-deep); }
+ 
+  .panel{
+    background: var(--bg-soft); border:1px solid var(--desk-line); border-radius:6px;
+    padding:24px; margin-bottom:20px;
+  }
+  .hint{ color:#7b8496; font-size:13px; }
+  .empty{
+    text-align:center; padding:50px 20px; color:#6d7688; font-style:italic; font-family:'Fraunces', serif;
+  }
+ 
+  /* ---------- post card = paper on a dark desk ---------- */
+  .post{
+    background: var(--paper); color: var(--ink); border-radius: 4px;
+    padding: 24px 26px; margin-bottom:22px; position:relative;
+    box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    transform: rotate(-0.2deg);
+  }
+  .post:nth-child(even){ transform: rotate(0.25deg); }
+  .stamp{
+    position:absolute; top:18px; right:22px;
+    font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:600; letter-spacing:.08em;
+    border:2px solid; border-radius:50%; width:64px; height:64px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    transform: rotate(8deg); opacity:.85; text-transform:uppercase; line-height:1.15;
+  }
+  .stamp.public{ color: var(--teal); border-color: var(--teal); }
+  .stamp.private{ color: var(--burgundy); border-color: var(--burgundy); }
+  .post-meta{ font-family:'IBM Plex Mono'; font-size:11.5px; color: var(--ink-soft); margin-bottom:6px; }
+  .post h3{ margin:0 0 10px; font-size:22px; padding-right:70px; }
+  .post .body{ font-size:15px; line-height:1.65; white-space:pre-wrap; margin-bottom:14px; }
+  .locked-body{
+    border:1px dashed var(--paper-line); border-radius:4px; padding:16px; text-align:center;
+    color: var(--ink-soft); font-size:13.5px; margin-bottom:14px;
+  }
+  .tags{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .tag-chip{
+    font-family:'IBM Plex Mono'; font-size:11px; padding:3px 9px; border-radius:10px;
+    background: var(--paper-shade); color:#5a5140; border:1px solid var(--paper-line);
+    cursor:pointer;
+  }
+  .tag-chip.active{ background: var(--gold); color:#241d0d; border-color:var(--gold-deep); }
+  .post-actions{ display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--paper-line); padding-top:12px; margin-top:6px; }
+  .post-actions button{ padding:6px 12px; font-size:12.5px; }
+ 
+  .comments{ border-top:1px dashed var(--paper-line); margin-top:14px; padding-top:14px; }
+  .comment{ padding:8px 0; border-bottom:1px solid #efe9db; font-size:13.5px; }
+  .comment .who{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-soft); }
+  .comment-form{ display:flex; gap:8px; margin-top:10px; }
+  .comment-form input{ background:#fff; color:var(--ink); border:1px solid var(--paper-line);}
+ 
+  .request-row{ display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--paper-line); font-size:13.5px;}
+ 
+  .person-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 0; border-bottom:1px solid var(--desk-line);
+  }
+  .person-row:last-child{ border-bottom:none; }
+  .person-name{ font-weight:600; }
+  .person-bio{ font-size:12.5px; color:#8891a3; }
+ 
+  .toolbar{ display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin-bottom:20px; }
+  .toolbar .field{ margin-bottom:0; min-width:180px; }
+ 
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background: var(--gold); color:#241d0d; padding:10px 20px; border-radius:4px;
+    font-weight:600; font-size:13.5px; box-shadow:0 8px 20px rgba(0,0,0,.4);
+    z-index: 999; animation: fadeup .25s ease;
+  }
+  @keyframes fadeup{ from{ opacity:0; transform:translate(-50%,8px);} to{ opacity:1; transform:translate(-50%,0);} }
+ 
+  .auth-wrap{ max-width:420px; margin: 60px auto; }
+  .auth-tabs{ display:flex; gap:6px; margin-bottom:18px; }
+  .auth-tabs button{ flex:1; background:transparent; border:1px solid var(--desk-line); color:#9aa3b5; }
+  .auth-tabs button.active{ background:var(--bg-soft); color:var(--gold); border-color: var(--gold-deep); }
+  .demo-note{ margin-top:18px; font-size:12.5px; color:#7b8496; line-height:1.6; }
+  .demo-note b{ color:#b7bfcf; }
+ 
+  @media (max-width: 640px){
+    .post h3{ padding-right:0; }
+    .stamp{ position:static; margin-bottom:10px; transform:none; width:auto; height:auto; border-radius:4px; padding:4px 10px; display:inline-flex; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+ 
+<script>
+/* =========================================================
+   ХРАНИЛИЩЕ ДАННЫХ (в памяти, без бэкенда — демо-режим)
+   ========================================================= */
+const state = {
+  users: [
+    { id:'u1', username:'anna_pisatel', password:'pass123', name:'Анна Петрова', bio:'Пишу о путешествиях и книгах' },
+    { id:'u2', username:'maxim_dev', password:'pass123', name:'Максим Волков', bio:'Технологии, код и немного философии' },
+  ],
+  currentUserId: null,
+  posts: [
+    { id:'p1', authorId:'u1', title:'Пять книг, которые изменили моё лето', content:'Это лето прошло под знаком долгих поездов и ещё более долгих романов. Делюсь списком, который переворачивал мне сознание каждую неделю...', tags:['книги','лето'], visibility:'public', createdAt: Date.now()-1000*60*60*24*5, accessRequests:[] },
+    { id:'p2', authorId:'u1', title:'Мой секретный список поездок на 2027 год', content:'Здесь только для своих: маршруты, которые я ещё не показывала публично, включая один город, где я хочу встретить зиму в одиночестве.', tags:['путешествия','личное'], visibility:'private', createdAt: Date.now()-1000*60*60*24*2, accessRequests:[] },
+    { id:'p3', authorId:'u2', title:'Почему я перешёл на Rust после десяти лет на Python', content:'Не буду скрывать — первые две недели я проклинал borrow checker. Но потом что-то щёлкнуло...', tags:['код','rust'], visibility:'public', createdAt: Date.now()-1000*60*60*24*8, accessRequests:[] },
+    { id:'p4', authorId:'u2', title:'Заметки для узкого круга', content:'То, что я пишу здесь, не предназначено для широкой публики — черновики мыслей, которые ещё не готовы к свету.', tags:['личное'], visibility:'private', createdAt: Date.now()-1000*60*60*24*1, accessRequests:[] },
+  ],
+  subscriptions: { u1:[], u2:[] },
+  comments: [
+    { id:'c1', postId:'p1', authorId:'u2', text:'Забираю себе в закладки, спасибо!', createdAt: Date.now()-1000*60*60*20 },
+  ],
+  ui: { tab:'feed', authMode:'login', editingPostId:null, expanded:{}, tagFilter:'', sortBy:'new' },
+};
+ 
+function uid(prefix){ return prefix + Math.random().toString(36).slice(2,9); }
+function currentUser(){ return state.users.find(u=>u.id===state.currentUserId) || null; }
+function userById(id){ return state.users.find(u=>u.id===id); }
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'short'}) + ' · ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+let toastTimer=null;
+function toast(msg){
+  clearTimeout(toastTimer);
+  let t = document.getElementById('toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.display='block';
+  toastTimer = setTimeout(()=>{ t.style.display='none'; }, 2200);
+}
+ 
+/* ---------- доступ к постам ---------- */
+function hasAccess(post, userId){
+  if(post.visibility==='public') return true;
+  if(!userId) return false;
+  if(post.authorId===userId) return true;
+  const req = post.accessRequests.find(r=>r.userId===userId);
+  return !!(req && req.status==='approved');
+}
+function requestStatus(post, userId){
+  const req = post.accessRequests.find(r=>r.userId===userId);
+  return req ? req.status : null;
+}
+ 
+/* =========================================================
+   ДЕЙСТВИЯ (регистрация/вход/посты/подписки/комментарии)
+   ========================================================= */
+function register(username, password, name, bio){
+  username = username.trim();
+  if(!username || !password || !name.trim()){ toast('Заполните имя пользователя, пароль и имя'); return; }
+  if(state.users.some(u=>u.username===username)){ toast('Такой логин уже занят'); return; }
+  const u = { id:uid('u'), username, password, name:name.trim(), bio:bio.trim()||'Пока ничего не рассказал(а) о себе' };
+  state.users.push(u);
+  state.subscriptions[u.id] = [];
+  state.currentUserId = u.id;
+  state.ui.tab='feed';
+  toast('Добро пожаловать, ' + u.name + '!');
+  render();
+}
+function login(username, password){
+  const u = state.users.find(u=>u.username===username.trim() && u.password===password);
+  if(!u){ toast('Неверный логин или пароль'); return; }
+  state.currentUserId = u.id;
+  state.ui.tab='feed';
+  toast('Вы вошли как ' + u.name);
+  render();
+}
+function logout(){
+  state.currentUserId = null;
+  render();
+}
+ 
+function createOrUpdatePost(data){
+  const tags = data.tags.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
+  if(!data.title.trim() || !data.content.trim()){ toast('Заголовок и текст обязательны'); return; }
+  if(state.ui.editingPostId){
+    const post = state.posts.find(p=>p.id===state.ui.editingPostId);
+    if(post && post.authorId===state.currentUserId){
+      post.title=data.title.trim(); post.content=data.content.trim(); post.tags=tags; post.visibility=data.visibility;
+      toast('Пост обновлён');
+    }
+    state.ui.editingPostId=null;
+  } else {
+    state.posts.unshift({
+      id:uid('p'), authorId: state.currentUserId, title:data.title.trim(), content:data.content.trim(),
+      tags, visibility:data.visibility, createdAt: Date.now(), accessRequests:[]
+    });
+    toast('Пост опубликован');
+  }
+  state.ui.tab='myposts';
+  render();
+}
+function startEdit(postId){
+  state.ui.editingPostId = postId;
+  state.ui.tab = 'write';
+  render();
+}
+function deletePost(postId){
+  if(!confirm('Удалить пост безвозвратно?')) return;
+  state.posts = state.posts.filter(p=>p.id!==postId);
+  state.comments = state.comments.filter(c=>c.postId!==postId);
+  toast('Пост удалён');
+  render();
+}
+ 
+function toggleSubscribe(userId){
+  const me = state.currentUserId;
+  const list = state.subscriptions[me] || (state.subscriptions[me]=[]);
+  const i = list.indexOf(userId);
+  if(i>=0){ list.splice(i,1); toast('Отписка оформлена'); }
+  else { list.push(userId); toast('Вы подписались'); }
+  render();
+}
+ 
+function requestAccess(postId){
+  const post = state.posts.find(p=>p.id===postId);
+  if(!post) return;
+  if(post.accessRequests.some(r=>r.userId===state.currentUserId)){ toast('Запрос уже отправлен'); return; }
+  post.accessRequests.push({ userId: state.currentUserId, status:'pending' });
+  toast('Запрос на доступ отправлен автору');
+  render();
+}
+function resolveRequest(postId, userId, status){
+  const post = state.posts.find(p=>p.id===postId);
+  const req = post.accessRequests.find(r=>r.userId===userId);
+  if(req){ req.status = status; toast(status==='approved' ? 'Доступ выдан' : 'Запрос отклонён'); render(); }
+}
+ 
+function addComment(postId, text){
+  if(!text.trim()) return;
+  state.comments.push({ id:uid('c'), postId, authorId: state.currentUserId, text:text.trim(), createdAt: Date.now() });
+  render();
+}
+function toggleExpand(postId){
+  state.ui.expanded[postId] = !state.ui.expanded[postId];
+  render();
+}
+ 
+/* =========================================================
+   РЕНДЕРИНГ
+   ========================================================= */
+function allTagsFrom(posts){
+  const s = new Set();
+  posts.forEach(p=>p.tags.forEach(t=>s.add(t)));
+  return Array.from(s).sort();
+}
+function applyTagAndSort(posts){
+  let list = posts.slice();
+  if(state.ui.tagFilter) list = list.filter(p=>p.tags.includes(state.ui.tagFilter));
+  if(state.ui.sortBy==='new') list.sort((a,b)=>b.createdAt-a.createdAt);
+  else if(state.ui.sortBy==='old') list.sort((a,b)=>a.createdAt-b.createdAt);
+  else if(state.ui.sortBy==='title') list.sort((a,b)=>a.title.localeCompare(b.title,'ru'));
+  return list;
+}
+ 
+function renderPost(post, opts={}){
+  const author = userById(post.authorId);
+  const me = state.currentUserId;
+  const access = hasAccess(post, me);
+  const isOwner = post.authorId===me;
+  const status = requestStatus(post, me);
+  const expanded = !!state.ui.expanded[post.id];
+  const postComments = state.comments.filter(c=>c.postId===post.id);
+ 
+  let bodyHtml;
+  if(access){
+    bodyHtml = `<div class="body">${escapeHtml(post.content)}</div>`;
+  } else {
+    let cta = '';
+    if(!me){ cta = `<div class="hint" style="color:#8a8270;">Войдите, чтобы запросить доступ</div>`; }
+    else if(status==='pending'){ cta = `<div class="hint" style="color:#8a8270;">Запрос отправлен, ждём ответа автора…</div>`; }
+    else if(status==='denied'){ cta = `<div class="hint" style="color:#8a8270;">Автор отклонил запрос на доступ</div>`; }
+    else { cta = `<button class="btn-ghost btn-small" onclick="requestAccess('${post.id}')">Запросить доступ</button>`; }
+    bodyHtml = `<div class="locked-body">🔒 Этот пост доступен только по запросу.<br>${cta}</div>`;
+  }
+ 
+  const tagsHtml = post.tags.map(t=>`<span class="tag-chip ${state.ui.tagFilter===t?'active':''}" onclick="setTagFilter('${t}')">#${escapeHtml(t)}</span>`).join('');
+ 
+  let ownerActions = '';
+  if(isOwner){
+    ownerActions = `
+      <button class="btn-ghost btn-small" onclick="startEdit('${post.id}')">Редактировать</button>
+      <button class="btn-danger btn-small" onclick="deletePost('${post.id}')">Удалить</button>`;
+    const pendingReqs = post.accessRequests.filter(r=>r.status==='pending');
+    if(pendingReqs.length){
+      ownerActions += `<span class="mono" style="font-size:11px;color:var(--burgundy);align-self:center;">● ${pendingReqs.length} запрос(а) на доступ</span>`;
+    }
+  }
+ 
+  let requestsBlock = '';
+  if(isOwner && post.visibility==='private' && post.accessRequests.length){
+    requestsBlock = `<div class="comments"><div class="post-meta" style="margin-bottom:8px;">ЗАПРОСЫ НА ДОСТУП</div>` +
+      post.accessRequests.map(r=>{
+        const u = userById(r.userId);
+        const label = r.status==='pending' ? `<button class="btn-ghost btn-small" onclick="resolveRequest('${post.id}','${r.userId}','approved')">Одобрить</button><button class="btn-danger btn-small" onclick="resolveRequest('${post.id}','${r.userId}','denied')">Отклонить</button>`
+          : (r.status==='approved' ? '<span class="mono" style="color:var(--teal);font-size:11px;">одобрено</span>' : '<span class="mono" style="color:var(--burgundy);font-size:11px;">отклонено</span>');
+        return `<div class="request-row"><span>${escapeHtml(u?u.name:'???')}</span><span style="display:flex;gap:6px;">${label}</span></div>`;
+      }).join('') + `</div>`;
+  }
+ 
+  let commentsBlock = '';
+  if(access){
+    commentsBlock = `
+      <div style="margin-top:8px;">
+        <button class="btn-ghost btn-small" onclick="toggleExpand('${post.id}')">${expanded? 'Скрыть' : 'Показать'} комментарии (${postComments.length})</button>
+      </div>`;
+    if(expanded){
+      commentsBlock += `<div class="comments">` +
+        (postComments.length ? postComments.map(c=>{
+          const cu = userById(c.authorId);
+          return `<div class="comment"><div class="who">${escapeHtml(cu?cu.name:'Аноним')} · ${fmtDate(c.createdAt)}</div>${escapeHtml(c.text)}</div>`;
+        }).join('') : `<div class="hint" style="color:#8a8270;">Комментариев пока нет</div>`) +
+        (me ? `<div class="comment-form">
+            <input id="cf-${post.id}" placeholder="Написать комментарий…" onkeydown="if(event.key==='Enter'){submitComment('${post.id}')}">
+            <button class="btn-primary btn-small" onclick="submitComment('${post.id}')">Отправить</button>
+          </div>` : `<div class="hint" style="margin-top:8px;color:#8a8270;">Войдите, чтобы комментировать</div>`) +
+        `</div>`;
+    }
+  }
+ 
+  return `
+  <article class="post">
+    <div class="stamp ${post.visibility}">${post.visibility==='public' ? 'Открыто' : 'Личное'}</div>
+    <div class="post-meta">${escapeHtml(author?author.name:'???')} · @${escapeHtml(author?author.username:'?')} · ${fmtDate(post.createdAt)}</div>
+    <h3>${escapeHtml(post.title)}</h3>
+    ${bodyHtml}
+    ${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ''}
+    ${(ownerActions) ? `<div class="post-actions">${ownerActions}</div>` : ''}
+    ${requestsBlock}
+    ${commentsBlock}
+  </article>`;
+}
+function submitComment(postId){
+  const el = document.getElementById('cf-'+postId);
+  if(el){ addComment(postId, el.value); }
+}
+function setTagFilter(tag){
+  state.ui.tagFilter = (state.ui.tagFilter===tag) ? '' : tag;
+  render();
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+ 
+function renderToolbar(posts){
+  const tags = allTagsFrom(posts);
+  return `
+  <div class="toolbar">
+    <div class="field">
+      <label>Тег</label>
+      <select onchange="state.ui.tagFilter=this.value; render();">
+        <option value="">Все теги</option>
+        ${tags.map(t=>`<option value="${t}" ${state.ui.tagFilter===t?'selected':''}>#${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field">
+      <label>Сортировка</label>
+      <select onchange="state.ui.sortBy=this.value; render();">
+        <option value="new" ${state.ui.sortBy==='new'?'selected':''}>Сначала новые</option>
+        <option value="old" ${state.ui.sortBy==='old'?'selected':''}>Сначала старые</option>
+        <option value="title" ${state.ui.sortBy==='title'?'selected':''}>По названию</option>
+      </select>
+    </div>
+  </div>`;
+}
+ 
+function renderFeed(){
+  const me = currentUser();
+  const subs = state.subscriptions[me.id] || [];
+  let posts = state.posts.filter(p=>subs.includes(p.authorId));
+  posts = applyTagAndSort(posts);
+  if(!subs.length){
+    return `<div class="panel empty">Вы пока ни на кого не подписаны.<br><span class="hint">Перейдите во вкладку «Люди», чтобы подписаться на авторов — их посты появятся здесь.</span></div>`;
+  }
+  return renderToolbar(state.posts.filter(p=>subs.includes(p.authorId))) +
+    (posts.length ? posts.map(p=>renderPost(p)).join('') : `<div class="empty">По этому тегу постов от ваших подписок нет</div>`);
+}
+ 
+function renderExplore(){
+  let posts = state.posts.filter(p=>p.visibility==='public');
+  const withTag = applyTagAndSort(posts);
+  return renderToolbar(posts) + (withTag.length ? withTag.map(p=>renderPost(p)).join('') : `<div class="empty">Ничего не найдено</div>`);
+}
+ 
+function renderMyPosts(){
+  const me = currentUser();
+  let posts = state.posts.filter(p=>p.authorId===me.id);
+  posts = applyTagAndSort(posts);
+  return renderToolbar(state.posts.filter(p=>p.authorId===me.id)) +
+    (posts.length ? posts.map(p=>renderPost(p)).join('') : `<div class="empty">Вы ещё не написали ни одного поста</div>`);
+}
+ 
+function renderWrite(){
+  const editing = state.ui.editingPostId ? state.posts.find(p=>p.id===state.ui.editingPostId) : null;
+  return `
+  <div class="panel">
+    <h3 style="margin-top:0;">${editing ? 'Редактировать пост' : 'Новый пост'}</h3>
+    <div class="field"><label>Заголовок</label><input id="f-title" value="${editing?escapeHtml(editing.title):''}" placeholder="О чём этот пост?"></div>
+    <div class="field"><label>Текст</label><textarea id="f-content" rows="7" placeholder="Пишите здесь…">${editing?escapeHtml(editing.content):''}</textarea></div>
+    <div class="field"><label>Теги (через запятую)</label><input id="f-tags" value="${editing?editing.tags.join(', '):''}" placeholder="например: путешествия, лето"></div>
+    <div class="field">
+      <label>Видимость</label>
+      <select id="f-visibility">
+        <option value="public" ${editing&&editing.visibility==='public'?'selected':''}>Публичный — виден всем</option>
+        <option value="private" ${editing&&editing.visibility==='private'?'selected':''}>Только по запросу</option>
+      </select>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-primary" onclick="submitWrite()">${editing?'Сохранить изменения':'Опубликовать'}</button>
+      ${editing ? `<button class="btn-ghost" onclick="state.ui.editingPostId=null; render();">Отмена</button>` : ''}
+    </div>
+  </div>`;
+}
+function submitWrite(){
+  createOrUpdatePost({
+    title: document.getElementById('f-title').value,
+    content: document.getElementById('f-content').value,
+    tags: document.getElementById('f-tags').value,
+    visibility: document.getElementById('f-visibility').value,
+  });
+}
+ 
+function renderPeople(){
+  const me = currentUser();
+  const subs = state.subscriptions[me.id] || [];
+  const others = state.users.filter(u=>u.id!==me.id);
+  if(!others.length) return `<div class="panel empty">Пока нет других пользователей — пригласите кого-нибудь зарегистрироваться</div>`;
+  return `<div class="panel">` + others.map(u=>{
+    const subscribed = subs.includes(u.id);
+    return `<div class="person-row">
+      <div><div class="person-name">${escapeHtml(u.name)}</div><div class="person-bio">@${escapeHtml(u.username)} · ${escapeHtml(u.bio)}</div></div>
+      <button class="${subscribed?'btn-ghost':'btn-primary'} btn-small" onclick="toggleSubscribe('${u.id}')">${subscribed?'Отписаться':'Подписаться'}</button>
+    </div>`;
+  }).join('') + `</div>`;
+}
+ 
+function renderNav(){
+  const tabs = [
+    ['feed','Лента'],
+    ['explore','Публичные посты'],
+    ['write','Написать'],
+    ['myposts','Мои посты'],
+    ['people','Люди'],
+  ];
+  return `<nav class="tabs">${tabs.map(([id,label])=>
+    `<button class="${state.ui.tab===id?'active':''}" onclick="state.ui.tab='${id}'; state.ui.editingPostId=null; render();">${label}</button>`
+  ).join('')}</nav>`;
+}
+ 
+function renderAuth(){
+  const mode = state.ui.authMode;
+  return `
+  <div class="auth-wrap">
+    <div class="brand" style="margin-bottom:26px;"><span class="mark">Черновик</span><span class="tag">блог-платформа</span></div>
+    <div class="auth-tabs">
+      <button class="${mode==='login'?'active':''}" onclick="state.ui.authMode='login'; render();">Вход</button>
+      <button class="${mode==='register'?'active':''}" onclick="state.ui.authMode='register'; render();">Регистрация</button>
+    </div>
+    <div class="panel">
+      ${mode==='login' ? `
+        <div class="field"><label>Логин</label><input id="a-username" placeholder="anna_pisatel"></div>
+        <div class="field"><label>Пароль</label><input id="a-password" type="password" placeholder="••••••••"></div>
+        <button class="btn-primary" style="width:100%;" onclick="login(document.getElementById('a-username').value, document.getElementById('a-password').value)">Войти</button>
+        <div class="demo-note">Демо-аккаунты: <b>anna_pisatel</b> / pass123, <b>maxim_dev</b> / pass123</div>
+      ` : `
+        <div class="field"><label>Имя</label><input id="a-name" placeholder="Как вас зовут"></div>
+        <div class="field"><label>Логин</label><input id="a-username" placeholder="Придумайте логин"></div>
+        <div class="field"><label>Пароль</label><input id="a-password" type="password" placeholder="Придумайте пароль"></div>
+        <div class="field"><label>О себе (необязательно)</label><input id="a-bio" placeholder="Пара слов о вас"></div>
+        <button class="btn-primary" style="width:100%;" onclick="register(document.getElementById('a-username').value, document.getElementById('a-password').value, document.getElementById('a-name').value, document.getElementById('a-bio').value)">Создать аккаунт</button>
+      `}
+    </div>
+  </div>`;
+}
+ 
+function render(){
+  const app = document.getElementById('app');
+  const me = currentUser();
+  if(!me){
+    app.innerHTML = renderAuth();
+    return;
+  }
+  let content = '';
+  if(state.ui.tab==='feed') content = renderFeed();
+  else if(state.ui.tab==='explore') content = renderExplore();
+  else if(state.ui.tab==='write') content = renderWrite();
+  else if(state.ui.tab==='myposts') content = renderMyPosts();
+  else if(state.ui.tab==='people') content = renderPeople();
+ 
+  app.innerHTML = `
+    <header class="topbar">
+      <div class="brand"><span class="mark">Черновик</span><span class="tag">блог-платформа</span></div>
+      <div class="who"><span class="name">${escapeHtml(me.name)}</span><span>@${escapeHtml(me.username)}</span><button class="btn-ghost btn-small" onclick="logout()">Выйти</button></div>
+    </header>
+    ${renderNav()}
+    ${content}
+  `;
+}
+ 
+render();
+</script>
+</body>
+</html>
